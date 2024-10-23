@@ -23,15 +23,6 @@ public class Paddle {
     public int getWidth() { return width; }
     public int getHeight() { return height; }
 
-    public void setWidth(int nuevoAncho) {
-        this.width = nuevoAncho;
-    }
-
-    // Opcional: Limitar el tamaño mínimo y máximo
-    public void setWidthLimit(int nuevoAncho) {
-        this.width = Math.max(nuevoAncho, 50); // Tamaño mínimo de 50
-    }
-
     public void draw(ShapeRenderer shape){
         shape.setColor(Color.BLUE);
         int deltaX = 0;
