@@ -43,8 +43,18 @@ public class PingBall {
 		return (int) y;
 	}
 
-	public void draw(ShapeRenderer shape){
+	public void draw(ShapeRenderer shape, boolean juegoPausado){
 		shape.setColor(color);
+
+		// Solo actualizar la posición si el juego no está en pausa
+		if (!juegoPausado) {
+			if (estaQuieto) {
+				// Si la pelota está quieta, no hace nada aquí
+			} else {
+				update();
+			}
+		}
+
 		shape.circle(x, y, size);
 	}
 

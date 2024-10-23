@@ -24,6 +24,8 @@ public class BlockBreakerGame extends ApplicationAdapter {
 	private int vidas;
 	private int puntaje;
 	private int nivel;
+	private boolean juegoPausado = false;
+
 
 	@Override
 	public void create () {
@@ -68,13 +70,25 @@ public class BlockBreakerGame extends ApplicationAdapter {
 	@Override
 	public void render () {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+		if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
+			juegoPausado = !juegoPausado;
+		}
+
+
 		shape.begin(ShapeRenderer.ShapeType.Filled);
-		pad.draw(shape);
-		// monitorear inicio del juego
-		if (ball.estaQuieto()) {
-			ball.setXY(pad.getX()+pad.getWidth()/2-5, pad.getY()+pad.getHeight()+11);
-			if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) ball.setEstaQuieto(false);
-		}else ball.update();
+		pad.draw(shape, juegoPausado);
+
+		
+
+		// Monitorear inicio del juego
+		if (!juegoPausado) {
+			if (ball.estaQuieto()) {
+				ball.setXY(pad.getX() + pad.getWidth() / 2 - 5, pad.getY() + pad.getHeight() + 11);
+				if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) ball.setEstaQuieto(false);
+			} else {
+				ball.update();
+			}
+		}
 		//verificar si se fue la bola x abajo
 		if (ball.getY()<0) {
 			vidas--;
@@ -111,10 +125,22 @@ public class BlockBreakerGame extends ApplicationAdapter {
 		}
 
 		ball.checkCollision(pad);
-		ball.draw(shape);
+		ball.draw(shape, juegoPausado);
 
 		shape.end();
 		dibujaTextos();
+		if (juegoPausado) {
+			shape.begin(ShapeRenderer.ShapeType.Filled);
+			shape.setColor(0, 0, 0, 0.9f); // Color negro semitransparente
+			shape.rect(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+			shape.end();
+
+			batch.begin();
+			font.draw(batch, "Juego en Pausa", Gdx.graphics.getWidth() / 2 - 100, Gdx.graphics.getHeight() / 2);
+			batch.end();
+		}
+
+
 	}
 
 	@Override
