@@ -23,20 +23,24 @@ public class Paddle {
     public int getWidth() { return width; }
     public int getHeight() { return height; }
 
-    public void draw(ShapeRenderer shape, boolean juegoPausado) {
-        shape.setColor(Color.BLUE);
-
-        if (!juegoPausado) {
-            int deltaX = 0;
-            if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) deltaX = -15;
-            if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) deltaX = 15;
-
-            if (x + deltaX >= 0 && x + deltaX + width <= Gdx.graphics.getWidth()) {
-                x += deltaX;
-            }
-        }
-
-        shape.rect(x, y, width, height);
+    public void setWidth(int nuevoAncho) {
+        this.width = nuevoAncho;
     }
 
+    // Opcional: Limitar el tamaño mínimo y máximo
+    public void setWidthLimit(int nuevoAncho) {
+        this.width = Math.max(nuevoAncho, 50); // Tamaño mínimo de 50
+    }
+
+    public void draw(ShapeRenderer shape){
+        shape.setColor(Color.BLUE);
+        int deltaX = 0;
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) deltaX = -15;
+        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) deltaX = 15;
+
+        if (x + deltaX >= 0 && x + deltaX + width <= Gdx.graphics.getWidth()) {
+            x += deltaX;
+        }
+        shape.rect(x, y, width, height);
+    }
 }

@@ -26,6 +26,27 @@ public class PingBall {
 		estaQuieto = iniciaQuieto;
 	}
 
+	// Métodos Getter
+	public float getX() {
+		return x;
+	}
+
+	public float getY() {
+		return y;
+	}
+
+	public int getSize() {
+		return size;
+	}
+
+	public float getxSpeed() {
+		return xSpeed;
+	}
+
+	public float getySpeed() {
+		return ySpeed;
+	}
+
 	public boolean estaQuieto() {
 		return estaQuieto;
 	}
@@ -39,22 +60,8 @@ public class PingBall {
 		this.y = y;
 	}
 
-	public int getY() {
-		return (int) y;
-	}
-
-	public void draw(ShapeRenderer shape, boolean juegoPausado){
+	public void draw(ShapeRenderer shape){
 		shape.setColor(color);
-
-		// Solo actualizar la posición si el juego no está en pausa
-		if (!juegoPausado) {
-			if (estaQuieto) {
-				// Si la pelota está quieta, no hace nada aquí
-			} else {
-				update();
-			}
-		}
-
 		shape.circle(x, y, size);
 	}
 
@@ -115,30 +122,6 @@ public class PingBall {
 		}
 	}
 
-	private CollisionSide collidesWith(Paddle paddle) {
-		if ((paddle.getX() + paddle.getWidth() >= x - size) && (paddle.getX() <= x + size) &&
-				(paddle.getY() + paddle.getHeight() >= y - size) && (paddle.getY() <= y + size)) {
-
-			float overlapLeft = (x + size) - paddle.getX();
-			float overlapRight = (paddle.getX() + paddle.getWidth()) - (x - size);
-			float overlapTop = (paddle.getY() + paddle.getHeight()) - (y - size);
-			float overlapBottom = (y + size) - paddle.getY();
-
-			float minOverlap = Math.min(Math.min(overlapLeft, overlapRight), Math.min(overlapTop, overlapBottom));
-
-			if (minOverlap == overlapLeft) {
-				return CollisionSide.LEFT;
-			} else if (minOverlap == overlapRight) {
-				return CollisionSide.RIGHT;
-			} else if (minOverlap == overlapTop) {
-				return CollisionSide.TOP;
-			} else {
-				return CollisionSide.BOTTOM;
-			}
-		}
-		return CollisionSide.NONE;
-	}
-
 	public void checkCollision(Block block) {
 		CollisionSide side = collidesWith(block);
 		if (side != CollisionSide.NONE) {
@@ -166,6 +149,64 @@ public class PingBall {
 			normalizeSpeed();
 			block.destroyed = true;
 		}
+	}
+
+	// Metodo sobrecargado para manejar el estado "pelotaEnLlamas"
+	public void checkCollision(Block block, boolean pelotaEnLlamas) {
+		CollisionSide side = collidesWith(block);
+		if (side != CollisionSide.NONE) {
+			switch (side) {
+				case TOP:
+					y = block.y + block.height + size;
+					ySpeed = Math.abs(ySpeed);
+					break;
+
+				case BOTTOM:
+					y = block.y - size;
+					ySpeed = -Math.abs(ySpeed);
+					break;
+
+				case LEFT:
+					x = block.x - size;
+					xSpeed = -Math.abs(xSpeed);
+					break;
+
+				case RIGHT:
+					x = block.x + block.width + size;
+					xSpeed = Math.abs(xSpeed);
+					break;
+			}
+			normalizeSpeed();
+			block.destroyed = true;
+
+			if (!pelotaEnLlamas) {
+				estaQuieto = false;
+			}
+		}
+	}
+
+	private CollisionSide collidesWith(Paddle paddle) {
+		if ((paddle.getX() + paddle.getWidth() >= x - size) && (paddle.getX() <= x + size) &&
+				(paddle.getY() + paddle.getHeight() >= y - size) && (paddle.getY() <= y + size)) {
+
+			float overlapLeft = (x + size) - paddle.getX();
+			float overlapRight = (paddle.getX() + paddle.getWidth()) - (x - size);
+			float overlapTop = (paddle.getY() + paddle.getHeight()) - (y - size);
+			float overlapBottom = (y + size) - paddle.getY();
+
+			float minOverlap = Math.min(Math.min(overlapLeft, overlapRight), Math.min(overlapTop, overlapBottom));
+
+			if (minOverlap == overlapLeft) {
+				return CollisionSide.LEFT;
+			} else if (minOverlap == overlapRight) {
+				return CollisionSide.RIGHT;
+			} else if (minOverlap == overlapTop) {
+				return CollisionSide.TOP;
+			} else {
+				return CollisionSide.BOTTOM;
+			}
+		}
+		return CollisionSide.NONE;
 	}
 
 	private CollisionSide collidesWith(Block block) {
