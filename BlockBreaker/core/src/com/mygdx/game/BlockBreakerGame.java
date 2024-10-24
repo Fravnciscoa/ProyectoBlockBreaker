@@ -24,6 +24,9 @@ public class BlockBreakerGame extends ApplicationAdapter {
 	private int vidas;
 	private int puntaje;
 	private int nivel;
+	private Pausa pausa;
+	private float ballSpeedX;
+	private float ballSpeedY;
 
 	@Override
 	public void create () {
@@ -40,6 +43,7 @@ public class BlockBreakerGame extends ApplicationAdapter {
 		pad = new Paddle(Gdx.graphics.getWidth()/2-50,40,100,10);
 		vidas = 3;
 		puntaje = 0;
+		pausa = new Pausa();
 	}
 	public void crearBloques(int filas) {
 		blocks.clear();
@@ -67,55 +71,86 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
 	@Override
 	public void render () {
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		shape.begin(ShapeRenderer.ShapeType.Filled);
-		pad.draw(shape);
-		// monitorear inicio del juego
-		if (ball.estaQuieto()) {
-			ball.setXY(pad.getX()+pad.getWidth()/2-5, pad.getY()+pad.getHeight()+11);
-			if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) ball.setEstaQuieto(false);
-		}else ball.update();
-		//verificar si se fue la bola x abajo
-		if (ball.getY()<0) {
-			vidas--;
-			//nivel = 1;
-			ball = new PingBall(pad.getX()+pad.getWidth()/2-5, pad.getY()+pad.getHeight()+11, 10, 5, 7, true);
-		}
-		// verificar game over
-		if (vidas<=0) {
-			vidas = 3;
-			nivel = 1;
-			puntaje = 0;
-			crearBloques(2+nivel);
-			//ball = new PingBall(pad.getX()+pad.getWidth()/2-5, pad.getY()+pad.getHeight()+11, 10, 5, 7, true);
-		}
-		// verificar si el nivel se terminó
-		if (blocks.size()==0) {
-			nivel++;
-			crearBloques(2+nivel);
-			ball = new PingBall(pad.getX()+pad.getWidth()/2-5, pad.getY()+pad.getHeight()+11, 10, 5, 7, true);
-		}
-		//dibujar bloques
-		for (Block b : blocks) {
-			b.draw(shape);
-			ball.checkCollision(b);
-		}
-		// actualizar estado de los bloques
-		for (int i = 0; i < blocks.size(); i++) {
-			Block b = blocks.get(i);
-			if (b.destroyed) {
-				puntaje++;
-				blocks.remove(b);
-				i--; //para no saltarse 1 tras eliminar del arraylist
+		if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+			if (pausa.estaPausado()) {
+				// Al reanudar el juego, restaurar las velocidades de la pelota
+				ball.setXSpeed(ballSpeedX);
+				ball.setYSpeed(ballSpeedY);
+			} else {
+				// Al pausar el juego, guardar las velocidades actuales y detener la pelota
+				ballSpeedX = ball.getXSpeed();
+				ballSpeedY = ball.getYSpeed();
+				ball.setXSpeed(0);
+				ball.setYSpeed(0);
 			}
+			pausa.togglePausa();
 		}
 
-		ball.checkCollision(pad);
-		ball.draw(shape);
+		if (!pausa.estaPausado()) {
+			// Lógica normal del juego cuando no está pausado
+			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+			shape.begin(ShapeRenderer.ShapeType.Filled);
+			pad.draw(shape);
 
-		shape.end();
-		dibujaTextos();
+			// Monitorear inicio del juego
+			if (ball.estaQuieto()) {
+				ball.setXY(pad.getX() + pad.getWidth() / 2 - 5, pad.getY() + pad.getHeight() + 11);
+				if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) ball.setEstaQuieto(false);
+			} else {
+				ball.update();  // Solo actualizar si no está quieto y no pausado
+			}
+
+			// Verificar si la pelota cayó abajo
+			if (ball.getY() < 0) {
+				vidas--;
+				ball = new PingBall(pad.getX() + pad.getWidth() / 2 - 5, pad.getY() + pad.getHeight() + 11, 10, 5, 7, true);
+			}
+
+			// Verificar si se acabaron las vidas
+			if (vidas <= 0) {
+				vidas = 3;
+				nivel = 1;
+				puntaje = 0;
+				crearBloques(2 + nivel);
+			}
+
+			// Verificar si el nivel se completó
+			if (blocks.size() == 0) {
+				nivel++;
+				crearBloques(2 + nivel);
+				ball = new PingBall(pad.getX() + pad.getWidth() / 2 - 5, pad.getY() + pad.getHeight() + 11, 10, 5, 7, true);
+			}
+
+			// Dibujar los bloques
+			for (Block b : blocks) {
+				b.draw(shape);
+				ball.checkCollision(b);
+			}
+
+			// Actualizar el estado de los bloques y el puntaje
+			for (int i = 0; i < blocks.size(); i++) {
+				Block b = blocks.get(i);
+				if (b.destroyed) {
+					puntaje++;
+					blocks.remove(b);
+					i--; // Ajuste para no saltarse un bloque después de eliminar
+				}
+			}
+
+			// Verificar colisión con el paddle y dibujar la pelota
+			ball.checkCollision(pad);
+			ball.draw(shape);
+
+			shape.end();
+			dibujaTextos();  // Dibujar puntos y vidas en pantalla
+		} else {
+			// Si el juego está pausado, dibujar mensaje de pausa
+			pausa.dibujarPausa(batch, font);
+		}
 	}
+
+
+
 
 	@Override
 	public void dispose () {

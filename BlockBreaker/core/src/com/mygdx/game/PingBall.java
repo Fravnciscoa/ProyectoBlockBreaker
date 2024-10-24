@@ -195,4 +195,21 @@ public class PingBall {
 			ySpeed *= factor;
 		}
 	}
+
+	public void setXSpeed(float xSpeed) {
+		this.xSpeed = xSpeed;
+	}
+
+	public void setYSpeed(float ySpeed) {
+		this.ySpeed = ySpeed;
+	}
+
+	public float getXSpeed() {
+		return xSpeed;
+	}
+
+	public float getYSpeed() {
+		return ySpeed;
+	}
+
 }
