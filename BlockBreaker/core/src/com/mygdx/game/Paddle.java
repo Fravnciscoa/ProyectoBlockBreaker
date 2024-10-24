@@ -22,6 +22,12 @@ public class Paddle {
     public int getY() { return y; }
     public int getWidth() { return width; }
     public int getHeight() { return height; }
+    // Clase Paddle
+
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
 
     public void draw(ShapeRenderer shape){
         shape.setColor(Color.BLUE);
