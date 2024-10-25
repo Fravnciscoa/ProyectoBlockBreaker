@@ -188,17 +188,18 @@ public class BlockBreakerGame extends ApplicationAdapter {
 				if (poder.verificarColisionConPaddle(pad)) {
 					poder.aplicarEfecto();  // Aplicar el efecto del poder
 					poder.activo = true;
-					poder.duracion = 5;  // Inicializar duración
+					poder.duracion = 5 * 60;  // Duración en "frames", suponiendo 60 FPS (5 segundos)
 				}
 
 				// Actualizar duración y eliminar si es necesario
 				if (poder.activo) {
-					poder.duracion -= Gdx.graphics.getDeltaTime();
+					poder.duracion--;  // Restar 1 en cada frame
 					if (poder.duracion <= 0) {
-						poder.revertirEfecto();
-						poderes.remove(poder);
-						i--;
-						continue;
+						poder.revertirEfecto();  // Revertir el efecto después de que el tiempo haya expirado
+						poder.activo = false;  // Desactivar el poder
+						poderes.remove(poder);  // Ahora eliminamos el poder de la lista
+						i--;  // Ajustar el índice si es necesario
+						continue;  // Continuamos para evitar errores en el siguiente ciclo
 					}
 				}
 
@@ -209,9 +210,15 @@ public class BlockBreakerGame extends ApplicationAdapter {
 					continue;
 				}
 
-				// Dibujar el poder
-				poder.render(batch);
+				// Dibujar el poder si aún no ha sido activado
+				if (!poder.activo) {
+					poder.render(batch);
+				}
 			}
+
+
+
+
 			batch.end();
 
 			shape.begin(ShapeRenderer.ShapeType.Filled);
