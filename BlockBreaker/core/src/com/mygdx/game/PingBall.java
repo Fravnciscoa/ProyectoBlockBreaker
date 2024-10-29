@@ -12,6 +12,8 @@ public class PingBall {
 	private float ySpeed;
 	private Color color = Color.WHITE;
 	private boolean estaQuieto;
+	private float speedMultiplier = 1.0f; // Factor de velocidad inicial
+
 
 	public enum CollisionSide {
 		NONE, TOP, BOTTOM, LEFT, RIGHT
@@ -24,6 +26,17 @@ public class PingBall {
 		this.xSpeed = xSpeed;
 		this.ySpeed = ySpeed;
 		estaQuieto = iniciaQuieto;
+	}
+
+	// Método para ajustar el multiplicador de velocidad
+	public void setSpeedMultiplier(float multiplier) {
+		this.speedMultiplier = multiplier;
+		normalizeSpeed(); // Normalizar la velocidad cada vez que se cambia el multiplicador
+	}
+
+	// Método para obtener el multiplicador de velocidad
+	public float getSpeedMultiplier() {
+		return this.speedMultiplier;
 	}
 
 	public boolean estaQuieto() {
@@ -183,14 +196,17 @@ public class PingBall {
 	}
 
 	private void normalizeSpeed() {
-		float speed = (float) Math.sqrt(xSpeed * xSpeed + ySpeed * ySpeed);
-		float desiredSpeed = 7.0f; // Ajusta este valor según sea necesario
+		float baseSpeed = 7.0f; // Velocidad base deseada
+		float desiredSpeed = baseSpeed * speedMultiplier; // Velocidad ajustada por el multiplicador
 
-		if (speed == 0) {
+		float currentSpeed = (float) Math.sqrt(xSpeed * xSpeed + ySpeed * ySpeed);
+
+		if (currentSpeed == 0) {
+			// Asignar una velocidad aleatoria si la bola está quieta
 			xSpeed = desiredSpeed * ((Math.random() > 0.5) ? 1 : -1);
 			ySpeed = desiredSpeed * ((Math.random() > 0.5) ? 1 : -1);
 		} else {
-			float factor = desiredSpeed / speed;
+			float factor = desiredSpeed / currentSpeed;
 			xSpeed *= factor;
 			ySpeed *= factor;
 		}

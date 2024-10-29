@@ -17,6 +17,12 @@ public abstract class Poder {
         this.activo = false;
     }
 
+    // Reiniciar duración del poder.
+    public void reiniciarDuracion(float nuevaDuracion) {
+        this.duracion = nuevaDuracion;
+    }
+
+
     // Método abstracto para aplicar el efecto del poder
     public abstract void aplicarEfecto();
 

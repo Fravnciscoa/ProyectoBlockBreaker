@@ -4,19 +4,18 @@ import com.badlogic.gdx.graphics.Texture;
 
 public class PoderReducirVelocidadBola extends Poder implements ModificadorPoder {
     private PingBall ball;
-    private float reduccionVelocidad;
+    private float reduccionFactor;
 
     public PoderReducirVelocidadBola(float x, float y, Texture imagenPoder, PingBall ball, float duracion) {
         super(x, y, imagenPoder, duracion);
         this.ball = ball;
-        this.reduccionVelocidad = 2.0f;  // Reducir la velocidad en un factor de 2
+        this.reduccionFactor = 0.5f;  // Reducir la velocidad al 50%
     }
 
     @Override
     public void aplicar() {
         if (!activo) {
-            ball.setXSpeed(ball.getXSpeed() / reduccionVelocidad);
-            ball.setYSpeed(ball.getYSpeed() / reduccionVelocidad);
+            ball.setSpeedMultiplier(reduccionFactor);  // Aplicar el factor de reducción
             activo = true;
         }
     }
@@ -24,8 +23,7 @@ public class PoderReducirVelocidadBola extends Poder implements ModificadorPoder
     @Override
     public void revertir() {
         if (activo) {
-            ball.setXSpeed(ball.getXSpeed() * reduccionVelocidad);
-            ball.setYSpeed(ball.getYSpeed() * reduccionVelocidad);
+            ball.setSpeedMultiplier(1.0f);  // Restablecer el multiplicador de velocidad
             activo = false;
         }
     }
@@ -37,6 +35,6 @@ public class PoderReducirVelocidadBola extends Poder implements ModificadorPoder
 
     @Override
     public void revertirEfecto() {
-        revertir();
+        revertir();  // Llamamos a revertir el efecto cuando se termine el tiempo del poder
     }
 }

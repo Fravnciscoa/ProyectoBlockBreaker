@@ -24,7 +24,8 @@ public class BlockBreakerGame extends ApplicationAdapter {
 	private PingBall ball;
 	private Paddle pad;
 	private ArrayList<Block> blocks = new ArrayList<>();
-	private ArrayList<Poder> poderes = new ArrayList<>();  // Lista de poderes activos
+	private ArrayList<Poder> poderes = new ArrayList<>();  // Lista de poderes en pantalla
+	private ArrayList<Poder> poderesActivos = new ArrayList<>(); // Lista de poderes activos
 	private int vidas;
 	private int puntaje;
 	private int nivel;
@@ -67,8 +68,8 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
 	private void cargarTexturasPoderes() {
 		texturasPoderes = new HashMap<>();
-		texturasPoderes.put(PoderAumentarTamañoPaddle.class, new Texture(Gdx.files.internal("poderAumentarPaddle.png")));
-		texturasPoderes.put(PoderReducirVelocidadBola.class, new Texture(Gdx.files.internal("poderReducirVelocidad.png")));
+		texturasPoderes.put(PoderAumentarTamañoPaddle.class, new Texture(Gdx.files.internal("poderAumentarPaddle2.png")));
+		texturasPoderes.put(PoderReducirVelocidadBola.class, new Texture(Gdx.files.internal("poderDisminuirVelocidad.png")));
 		texturasPoderes.put(PoderDuplicarPuntos.class, new Texture(Gdx.files.internal("poderDuplicarPuntos.png")));
 		// Añade aquí la carga de nuevas texturas para otros poderes
 	}
@@ -91,7 +92,8 @@ public class BlockBreakerGame extends ApplicationAdapter {
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
 		font.draw(batch, "Puntos: " + puntaje, 10, 25);
-		font.draw(batch, "Vidas: " + vidas, Gdx.graphics.getWidth() - 200, 25);
+		font.draw(batch, "Vidas: " + vidas, Gdx.graphics.getWidth() - 10, 25);
+		font.draw(batch, "Nivel : " + nivel, Gdx.graphics.getWidth()/2 , 25);
 		batch.end();
 	}
 
@@ -142,6 +144,8 @@ public class BlockBreakerGame extends ApplicationAdapter {
 				nivel = 1;
 				puntaje = 0;
 				crearBloques(2 + nivel);
+				// Limpiar poderes activos al reiniciar el juego
+				poderesActivos.clear();
 			}
 
 			if (blocks.size() == 0) {
@@ -161,14 +165,32 @@ public class BlockBreakerGame extends ApplicationAdapter {
 					blocks.remove(b);
 					i--;
 
-					// Generar un poder con probabilidad de 1/8
-					if (Math.random() < 0.125) {
+					// Generar un poder con probabilidad de 1/8 (12.5%)
+					if (Math.random() < 0.7) {
 						// Seleccionar aleatoriamente un tipo de poder
 						Class<? extends Poder> tipoPoder = tiposDePoderes[new Random().nextInt(tiposDePoderes.length)];
 						Texture texturaPoder = texturasPoderes.get(tipoPoder);
 
-						// Crear instancia del poder seleccionado
-						Poder nuevoPoder = crearPoder(tipoPoder, b.x, b.y, texturaPoder);
+						// Calcular la posición central del bloque para posicionar el poder
+						float centroX = b.x + (b.width / 2f) - (texturaPoder.getWidth() / 2f);
+						float centroY = b.y + (b.height / 2f) - (texturaPoder.getHeight() / 2f);
+
+						// Verificar que el poder no salga de la pantalla en el eje X
+						if (centroX < 0) {
+							centroX = 0;
+						} else if (centroX + texturaPoder.getWidth() > Gdx.graphics.getWidth()) {
+							centroX = Gdx.graphics.getWidth() - texturaPoder.getWidth();
+						}
+
+						// Verificar que el poder no salga de la pantalla en el eje Y
+						if (centroY < 0) {
+							centroY = 0;
+						} else if (centroY + texturaPoder.getHeight() > Gdx.graphics.getHeight()) {
+							centroY = Gdx.graphics.getHeight() - texturaPoder.getHeight();
+						}
+
+						// Crear instancia del poder seleccionado con la posición central ajustada
+						Poder nuevoPoder = crearPoder(tipoPoder, centroX, centroY, texturaPoder);
 						if (nuevoPoder != null) {
 							poderes.add(nuevoPoder);
 						}
@@ -182,44 +204,44 @@ public class BlockBreakerGame extends ApplicationAdapter {
 			batch.begin();
 			for (int i = 0; i < poderes.size(); i++) {
 				Poder poder = poderes.get(i);
+
 				poder.moverPoder(2);  // Mover el poder hacia abajo
 
 				// Verificar colisión del poder con el paddle
 				if (poder.verificarColisionConPaddle(pad)) {
-					poder.aplicarEfecto();  // Aplicar el efecto del poder
-					poder.activo = true;
-					poder.duracion = 5 * 60;  // Duración en "frames", suponiendo 60 FPS (5 segundos)
-				}
+					// Activar el poder de manera controlada
+					activarPoder(poder);
 
-				// Actualizar duración y eliminar si es necesario
-				if (poder.activo) {
-					poder.duracion--;  // Restar 1 en cada frame
-					if (poder.duracion <= 0) {
-						poder.revertirEfecto();  // Revertir el efecto después de que el tiempo haya expirado
-						poder.activo = false;  // Desactivar el poder
-						poderes.remove(poder);  // Ahora eliminamos el poder de la lista
-						i--;  // Ajustar el índice si es necesario
-						continue;  // Continuamos para evitar errores en el siguiente ciclo
-					}
+					poderes.remove(i);           // Eliminar de poderes en pantalla
+					i--;                         // Ajustar el índice
+					continue;
 				}
 
 				// Eliminar poder si sale de la pantalla y no ha sido activado
-				if (!poder.activo && poder.desaparecer()) {
-					poderes.remove(poder);
+				if (poder.desaparecer()) {
+					poderes.remove(i);
 					i--;
 					continue;
 				}
 
-				// Dibujar el poder si aún no ha sido activado
-				if (!poder.activo) {
-					poder.render(batch);
+				// Dibujar el poder
+				poder.render(batch);
+			}
+			batch.end();
+
+			// Actualizar poderes activos
+			for (int i = 0; i < poderesActivos.size(); i++) {
+				Poder poder = poderesActivos.get(i);
+
+				// Reducir la duración del poder activo
+				poder.duracion -= Gdx.graphics.getDeltaTime();
+
+				if (poder.duracion <= 0) {
+					poder.revertirEfecto();       // Revertir el efecto del poder
+					poderesActivos.remove(i);     // Eliminar de la lista de poderes activos
+					i--;                          // Ajustar el índice
 				}
 			}
-
-
-
-
-			batch.end();
 
 			shape.begin(ShapeRenderer.ShapeType.Filled);
 			ball.checkCollision(pad);
@@ -229,6 +251,25 @@ public class BlockBreakerGame extends ApplicationAdapter {
 			dibujaTextos();
 		} else {
 			pausa.dibujarPausa(batch, font);
+		}
+	}
+
+	private void activarPoder(Poder poder) {
+		boolean poderYaActivo = false;
+
+		// Iterar sobre los poderes activos para verificar si ya está activo
+		for (Poder activo : poderesActivos) {
+			if (activo.getClass().equals(poder.getClass())) {
+				activo.reiniciarDuracion(poder.duracion); // Reiniciar la duración
+				poderYaActivo = true;
+				break;
+			}
+		}
+
+		// Si el poder no está activo, añadirlo a la lista de poderes activos
+		if (!poderYaActivo) {
+			poder.aplicarEfecto();
+			poderesActivos.add(poder);
 		}
 	}
 
