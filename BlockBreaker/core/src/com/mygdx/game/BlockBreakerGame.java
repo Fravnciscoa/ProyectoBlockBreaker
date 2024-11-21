@@ -47,6 +47,9 @@ public class BlockBreakerGame extends JuegoBase {
 		font.getData().setScale(3, 2);
 		shape = new ShapeRenderer();
 		ball = new PingBall(Gdx.graphics.getWidth() / 2 - 10, 41, 10, 5, 7, true);
+		// Configurar estrategias de colisión para la bola
+		ball.setEstrategiaColision(new ColisionPaddle()); // Estrategia predeterminada: colisión con paddle
+		ball.setEstrategiaColision(new ColisionBlock());
 		pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);
 		vidas = 3;
 		puntaje = 0;
@@ -83,7 +86,7 @@ public class BlockBreakerGame extends JuegoBase {
 
 			// Bola fuera del límite inferior
 			if (ball.getY() < 0) {
-				vidas--;
+				vidas--; // Aquí se resta una vida
 				if (vidas > 0) {
 					ball = new PingBall(pad.getX() + pad.getWidth() / 2 - 5, pad.getY() + pad.getHeight() + 11, 10, 5, 7, true);
 				} else {
@@ -91,9 +94,12 @@ public class BlockBreakerGame extends JuegoBase {
 				}
 			}
 
+
 			// Lógica de bloques y poderes
 			actualizarColisionesBloques();
 			actualizarPoderes();
+
+
 
 			// Avanzar de nivel si no quedan bloques
 			if (blocks.isEmpty()) {
@@ -114,6 +120,7 @@ public class BlockBreakerGame extends JuegoBase {
 			}
 
 			// Colisión de la bola con el paddle
+			ball.setEstrategiaColision(new ColisionPaddle()); // Cambiar a la estrategia de colisión con el paddle
 			ball.checkCollision(pad);
 		}
 	}
@@ -165,6 +172,7 @@ public class BlockBreakerGame extends JuegoBase {
 	private void actualizarColisionesBloques() {
 		for (int i = 0; i < blocks.size(); i++) {
 			Block b = blocks.get(i);
+			ball.setEstrategiaColision(new ColisionBlock()); // Cambiar a la estrategia de colisión con bloques
 			ball.checkCollision(b);
 			if (b.destroyed) {
 				puntaje += getPuntajeMultiplicado(1);
@@ -174,6 +182,7 @@ public class BlockBreakerGame extends JuegoBase {
 			}
 		}
 	}
+
 
 	private void generarPoder(Block b) {
 		if (Math.random() < 0.7) {
@@ -248,6 +257,9 @@ public class BlockBreakerGame extends JuegoBase {
 		puntaje = 0;
 		crearBloques(2 + nivel);
 		poderesActivos.clear();
+		ball = new PingBall(Gdx.graphics.getWidth() / 2 - 10, 41, 10, 5, 7, true);
+
+
 	}
 
 	@Override

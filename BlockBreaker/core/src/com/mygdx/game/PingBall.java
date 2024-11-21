@@ -13,7 +13,14 @@ public class PingBall {
 	private Color color = Color.WHITE;
 	private boolean estaQuieto;
 	private float speedMultiplier = 1.0f; // Factor de velocidad inicial
+	private EstrategiaColision estrategiaColision; // Estrategia de colisión actual
 
+	public void setY(int y) {
+		this.y = y;
+	}
+	public void setX(int x) {
+		this.x = x;
+	}
 
 	public enum CollisionSide {
 		NONE, TOP, BOTTOM, LEFT, RIGHT
@@ -28,17 +35,17 @@ public class PingBall {
 		estaQuieto = iniciaQuieto;
 	}
 
-	// Método para ajustar el multiplicador de velocidad
+	// Métodos relacionados con la velocidad
 	public void setSpeedMultiplier(float multiplier) {
 		this.speedMultiplier = multiplier;
-		normalizeSpeed(); // Normalizar la velocidad cada vez que se cambia el multiplicador
+		normalizeSpeed();
 	}
 
-	// Método para obtener el multiplicador de velocidad
 	public float getSpeedMultiplier() {
 		return this.speedMultiplier;
 	}
 
+	// Métodos relacionados con el estado de la bola
 	public boolean estaQuieto() {
 		return estaQuieto;
 	}
@@ -47,6 +54,7 @@ public class PingBall {
 		estaQuieto = bb;
 	}
 
+	// Métodos relacionados con la posición
 	public void setXY(int x, int y) {
 		this.x = x;
 		this.y = y;
@@ -56,7 +64,42 @@ public class PingBall {
 		return (int) y;
 	}
 
-	public void draw(ShapeRenderer shape){
+	public float getX() {
+		return x;
+	}
+
+	public float getYFloat() {
+		return y;
+	}
+
+	public int getSize() {
+		return size;
+	}
+
+	// Métodos para velocidad en cada eje
+	public void setXSpeed(float xSpeed) {
+		this.xSpeed = xSpeed;
+	}
+
+	public void setYSpeed(float ySpeed) {
+		this.ySpeed = ySpeed;
+	}
+
+	public float getXSpeed() {
+		return xSpeed;
+	}
+
+	public float getYSpeed() {
+		return ySpeed;
+	}
+
+	// Método para cambiar el color
+	public void setColor(Color color) {
+		this.color = color;
+	}
+
+	// Métodos de dibujo y actualización
+	public void draw(ShapeRenderer shape) {
 		shape.setColor(color);
 		shape.circle(x, y, size);
 	}
@@ -65,6 +108,8 @@ public class PingBall {
 		if (estaQuieto) return;
 		x += xSpeed;
 		y += ySpeed;
+
+		// Comprobar bordes de la pantalla
 		if (x - size < 0) {
 			x = size;
 			xSpeed = Math.abs(xSpeed);
@@ -81,44 +126,19 @@ public class PingBall {
 		}
 	}
 
-	public void checkCollision(Paddle paddle) {
-		CollisionSide side = collidesWith(paddle);
-		if (side != CollisionSide.NONE) {
-			color = Color.GREEN;
+	// Métodos relacionados con colisiones
+	public void setEstrategiaColision(EstrategiaColision estrategia) {
+		this.estrategiaColision = estrategia;
+	}
 
-			switch (side) {
-				case TOP:
-					y = paddle.getY() + paddle.getHeight() + size;
-					ySpeed = Math.abs(ySpeed);
-
-					// Variar xSpeed según la posición de impacto
-					float paddleCenter = paddle.getX() + paddle.getWidth() / 2f;
-					float distanceFromCenter = (x - paddleCenter) / (paddle.getWidth() / 2f);
-					xSpeed += distanceFromCenter * 2;
-					break;
-
-				case BOTTOM:
-					y = paddle.getY() - size;
-					ySpeed = -Math.abs(ySpeed);
-					break;
-
-				case LEFT:
-					x = paddle.getX() - size;
-					xSpeed = -Math.abs(xSpeed);
-					break;
-
-				case RIGHT:
-					x = paddle.getX() + paddle.getWidth() + size;
-					xSpeed = Math.abs(xSpeed);
-					break;
-			}
-			normalizeSpeed();
-		} else {
-			color = Color.WHITE;
+	public void checkCollision(Object objeto) {
+		if (estrategiaColision != null) {
+			estrategiaColision.manejarColision(this, objeto);
 		}
 	}
 
-	private CollisionSide collidesWith(Paddle paddle) {
+	// Métodos para calcular las colisiones (delegados a las estrategias)
+	public CollisionSide collidesWith(Paddle paddle) {
 		if ((paddle.getX() + paddle.getWidth() >= x - size) && (paddle.getX() <= x + size) &&
 				(paddle.getY() + paddle.getHeight() >= y - size) && (paddle.getY() <= y + size)) {
 
@@ -142,36 +162,7 @@ public class PingBall {
 		return CollisionSide.NONE;
 	}
 
-	public void checkCollision(Block block) {
-		CollisionSide side = collidesWith(block);
-		if (side != CollisionSide.NONE) {
-			switch (side) {
-				case TOP:
-					y = block.y + block.height + size;
-					ySpeed = Math.abs(ySpeed);
-					break;
-
-				case BOTTOM:
-					y = block.y - size;
-					ySpeed = -Math.abs(ySpeed);
-					break;
-
-				case LEFT:
-					x = block.x - size;
-					xSpeed = -Math.abs(xSpeed);
-					break;
-
-				case RIGHT:
-					x = block.x + block.width + size;
-					xSpeed = Math.abs(xSpeed);
-					break;
-			}
-			normalizeSpeed();
-			block.destroyed = true;
-		}
-	}
-
-	private CollisionSide collidesWith(Block block) {
+	public CollisionSide collidesWith(Block block) {
 		if ((block.x + block.width >= x - size) && (block.x <= x + size) &&
 				(block.y + block.height >= y - size) && (block.y <= y + size)) {
 
@@ -195,14 +186,14 @@ public class PingBall {
 		return CollisionSide.NONE;
 	}
 
-	private void normalizeSpeed() {
+	// Método para normalizar la velocidad
+    void normalizeSpeed() {
 		float baseSpeed = 7.0f; // Velocidad base deseada
 		float desiredSpeed = baseSpeed * speedMultiplier; // Velocidad ajustada por el multiplicador
 
 		float currentSpeed = (float) Math.sqrt(xSpeed * xSpeed + ySpeed * ySpeed);
 
 		if (currentSpeed == 0) {
-			// Asignar una velocidad aleatoria si la bola está quieta
 			xSpeed = desiredSpeed * ((Math.random() > 0.5) ? 1 : -1);
 			ySpeed = desiredSpeed * ((Math.random() > 0.5) ? 1 : -1);
 		} else {
@@ -211,21 +202,4 @@ public class PingBall {
 			ySpeed *= factor;
 		}
 	}
-
-	public void setXSpeed(float xSpeed) {
-		this.xSpeed = xSpeed;
-	}
-
-	public void setYSpeed(float ySpeed) {
-		this.ySpeed = ySpeed;
-	}
-
-	public float getXSpeed() {
-		return xSpeed;
-	}
-
-	public float getYSpeed() {
-		return ySpeed;
-	}
-
 }
