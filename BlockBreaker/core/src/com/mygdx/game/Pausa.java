@@ -6,12 +6,24 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class Pausa {
-    private boolean pausado;
-    private GlyphLayout layout;
+    // Instancia única de la clase (privada y estática)
+    private static Pausa instancia;
 
-    public Pausa() {
+    private boolean pausado;
+    private final GlyphLayout layout;
+
+    // Constructor privado para evitar instanciación externa
+    private Pausa() {
         pausado = false;
-        layout = new GlyphLayout();  // Para calcular el tamaño del texto
+        layout = new GlyphLayout();
+    }
+
+    // Método público estático para obtener la única instancia
+    public static Pausa getInstance() {
+        if (instancia == null) {
+            instancia = new Pausa();  // Crear instancia si no existe
+        }
+        return instancia;  // Retornar la instancia única
     }
 
     public void togglePausa() {
@@ -26,17 +38,13 @@ public class Pausa {
         if (pausado) {
             batch.begin();
             String mensajePausa = "Juego Pausado - Presiona ESC para continuar";
-
-            // Usar GlyphLayout para calcular el tamaño del texto
             layout.setText(font, mensajePausa);
             float textoAncho = layout.width;
             float textoAlto = layout.height;
 
-            // Centramos el texto
             float x = (Gdx.graphics.getWidth() - textoAncho) / 2.2f;
             float y = (Gdx.graphics.getHeight() + textoAlto) / 2;
 
-            // Dibujar texto centrado
             font.draw(batch, mensajePausa, x, y);
             batch.end();
         }

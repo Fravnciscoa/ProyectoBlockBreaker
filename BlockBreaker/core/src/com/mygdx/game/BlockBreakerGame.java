@@ -60,7 +60,7 @@ public class BlockBreakerGame extends ApplicationAdapter {
 		pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);
 		vidas = 3;
 		puntaje = 0;
-		pausa = new Pausa();
+		pausa = Pausa.getInstance();
 
 		// Cargar las texturas de los poderes
 		cargarTexturasPoderes();
