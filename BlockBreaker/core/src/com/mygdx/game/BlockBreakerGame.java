@@ -22,6 +22,7 @@ public class BlockBreakerGame extends JuegoBase {
 	private PingBall ball;
 	private Paddle pad;
 	private ArrayList<Block> blocks = new ArrayList<>();
+	private PoderFactory poderFactory;
 	private ArrayList<Poder> poderes = new ArrayList<>();
 	private ArrayList<Poder> poderesActivos = new ArrayList<>();
 	private int vidas;
@@ -31,12 +32,8 @@ public class BlockBreakerGame extends JuegoBase {
 	private float ballSpeedX;
 	private float ballSpeedY;
 	private int multiplicadorPuntos = 1;
-	private Map<Class<? extends Poder>, Texture> texturasPoderes;
-	private Class<? extends Poder>[] tiposDePoderes = new Class[]{
-			PoderDuplicarPuntos.class,
-			PoderAumentarTamañoPaddle.class,
-			PoderReducirVelocidadBola.class
-	};
+
+
 
 	@Override
 	protected void inicializar() {
@@ -49,14 +46,16 @@ public class BlockBreakerGame extends JuegoBase {
 		ball = new PingBall(Gdx.graphics.getWidth() / 2 - 10, 41, 10, 5, 7, true);
 		// Configurar estrategias de colisión para la bola
 		ball.setEstrategiaColision(new ColisionPaddle()); // Estrategia predeterminada: colisión con paddle
-		ball.setEstrategiaColision(new ColisionBlock());
+		//ball.setEstrategiaColision(new ColisionBlock());
 		pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);
 		vidas = 3;
 		puntaje = 0;
 		nivel = 1;
+
+		poderFactory = new PoderFactoryConcreta(pad, ball, this);
 		pausa = Pausa.getInstance();
 		crearBloques(2 + nivel);
-		cargarTexturasPoderes();
+
 	}
 
 	@Override
@@ -146,7 +145,7 @@ public class BlockBreakerGame extends JuegoBase {
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
 		font.draw(batch, "Puntos: " + puntaje, 10, 25);
-		font.draw(batch, "Vidas: " + vidas, Gdx.graphics.getWidth() - 150, 25);
+		font.draw(batch, "Vidas: " + vidas, Gdx.graphics.getWidth() - 10, 25);
 		font.draw(batch, "Nivel: " + nivel, Gdx.graphics.getWidth() / 2, 25);
 		batch.end();
 
@@ -186,62 +185,67 @@ public class BlockBreakerGame extends JuegoBase {
 
 	private void generarPoder(Block b) {
 		if (Math.random() < 0.7) {
-			Class<? extends Poder> tipoPoder = tiposDePoderes[new Random().nextInt(tiposDePoderes.length)];
-			Texture textura = texturasPoderes.get(tipoPoder);
-			float x = b.x + b.width / 2f - textura.getWidth() / 2f;
-			float y = b.y + b.height / 2f - textura.getHeight() / 2f;
-			Poder nuevoPoder = crearPoder(tipoPoder, x, y, textura);
-			if (nuevoPoder != null) poderes.add(nuevoPoder);
+			float x = b.x + b.width / 2f;
+			float y = b.y + b.height / 2f;
+			Poder nuevoPoder;
+
+			// Seleccionar un tipo de poder y crearlo usando la fábrica
+			int tipo = new Random().nextInt(3);
+			switch (tipo) {
+				case 0:
+					nuevoPoder = poderFactory.crearPoderAumentarTamaño(x, y);
+					break;
+				case 1:
+					nuevoPoder = poderFactory.crearPoderDuplicarPuntos(x, y);
+					break;
+				case 2:
+					nuevoPoder = poderFactory.crearPoderReducirVelocidad(x, y);
+					break;
+				default:
+					nuevoPoder = null;
+			}
+
+			if (nuevoPoder != null) {
+				poderes.add(nuevoPoder);
+			}
 		}
 	}
+
 
 	private void actualizarPoderes() {
 		for (int i = 0; i < poderes.size(); i++) {
 			Poder poder = poderes.get(i);
-			poder.moverPoder(2);
+			poder.moverPoder(2);  // Mueve el poder hacia abajo
 			if (poder.verificarColisionConPaddle(pad)) {
-				activarPoder(poder);
-				poderes.remove(i);
+				activarPoder(poder);  // Activa el poder si colisiona con el paddle
+				poderes.remove(i);   // Remueve el poder activado
 				i--;
 			} else if (poder.desaparecer()) {
-				poderes.remove(i);
+				poderes.remove(i);   // Remueve poderes que salen de la pantalla
 				i--;
 			}
 		}
 	}
+
 
 	private void activarPoder(Poder poder) {
 		boolean yaActivo = false;
 		for (Poder activo : poderesActivos) {
 			if (activo.getClass().equals(poder.getClass())) {
-				activo.reiniciarDuracion(poder.duracion);
+				activo.reiniciarDuracion(poder.duracion);  // Reinicia la duración si ya está activo
 				yaActivo = true;
 				break;
 			}
 		}
 		if (!yaActivo) {
-			poder.aplicarEfecto();
-			poderesActivos.add(poder);
+			poder.aplicarEfecto();  // Aplica el efecto del poder
+			poderesActivos.add(poder);  // Agrega el poder a la lista de activos
 		}
 	}
 
-	private Poder crearPoder(Class<? extends Poder> tipo, float x, float y, Texture textura) {
-		try {
-			if (tipo == PoderDuplicarPuntos.class) return new PoderDuplicarPuntos(x, y, textura, this, 5);
-			if (tipo == PoderAumentarTamañoPaddle.class) return new PoderAumentarTamañoPaddle(x, y, textura, pad, 5);
-			if (tipo == PoderReducirVelocidadBola.class) return new PoderReducirVelocidadBola(x, y, textura, ball, 5);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
 
-	private void cargarTexturasPoderes() {
-		texturasPoderes = new HashMap<>();
-		texturasPoderes.put(PoderAumentarTamañoPaddle.class, new Texture(Gdx.files.internal("poderAumentarPaddle2.png")));
-		texturasPoderes.put(PoderReducirVelocidadBola.class, new Texture(Gdx.files.internal("poderDisminuirVelocidad.png")));
-		texturasPoderes.put(PoderDuplicarPuntos.class, new Texture(Gdx.files.internal("poderDuplicarPuntos.png")));
-	}
+
+
 
 	public void setMultiplicadorPuntos(int multiplicador) {
 		this.multiplicadorPuntos = multiplicador;
@@ -267,6 +271,10 @@ public class BlockBreakerGame extends JuegoBase {
 		batch.dispose();
 		font.dispose();
 		shape.dispose();
-		for (Texture textura : texturasPoderes.values()) textura.dispose();
+		// Liberar texturas de la fábrica
+		if (poderFactory instanceof PoderFactoryConcreta) {
+			PoderFactoryConcreta concreta = (PoderFactoryConcreta) poderFactory;
+			concreta.disposeTexturas();
+		}
 	}
 }

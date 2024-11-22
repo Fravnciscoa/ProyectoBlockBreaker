@@ -4,6 +4,9 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class PingBall {
 	private float x;
 	private float y;
@@ -13,7 +16,8 @@ public class PingBall {
 	private Color color = Color.WHITE;
 	private boolean estaQuieto;
 	private float speedMultiplier = 1.0f; // Factor de velocidad inicial
-	private EstrategiaColision estrategiaColision; // Estrategia de colisión actual
+	private EstrategiaColision estrategiaColision;// Estrategia de colisión actual
+	private List<Float> speedModifiers = new ArrayList<>();
 
 	public void setY(int y) {
 		this.y = y;
@@ -36,10 +40,33 @@ public class PingBall {
 	}
 
 	// Métodos relacionados con la velocidad
-	public void setSpeedMultiplier(float multiplier) {
+	private void setSpeedMultiplier(float multiplier) {
 		this.speedMultiplier = multiplier;
 		normalizeSpeed();
 	}
+
+	// Agregar un modificador de velocidad
+	public void addSpeedModifier(float modifier) {
+		speedModifiers.add(modifier);
+		recalculateSpeedMultiplier();
+	}
+
+	// Eliminar un modificador de velocidad
+	public void removeSpeedModifier(float modifier) {
+		speedModifiers.remove(modifier);
+		recalculateSpeedMultiplier();
+	}
+
+	// Recalcular el multiplicador total
+	private void recalculateSpeedMultiplier() {
+		speedMultiplier = 1.0f;
+		for (float modifier : speedModifiers) {
+			speedMultiplier *= modifier;
+		}
+		normalizeSpeed(); // Normalizar la velocidad después de recalcular
+	}
+
+
 
 	public float getSpeedMultiplier() {
 		return this.speedMultiplier;

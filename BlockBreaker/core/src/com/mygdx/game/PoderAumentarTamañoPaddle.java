@@ -1,5 +1,6 @@
 package com.mygdx.game;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 
 public class PoderAumentarTamañoPaddle extends Poder implements ModificadorPoder {
@@ -12,10 +13,19 @@ public class PoderAumentarTamañoPaddle extends Poder implements ModificadorPode
         this.incrementoTamaño = 50;  // Aumentar 50 pixeles el ancho del paddle
     }
 
-    @Override
     public void aplicar() {
         if (!activo) {
-            paddle.setWidth(paddle.getWidth() + incrementoTamaño);  // Aumentar el tamaño del paddle
+            float incremento = incrementoTamaño;
+            float nuevaAnchura = paddle.getWidth() + incremento;
+
+            // Verificar si el paddle se saldría del límite derecho
+            float pantallaAncho = Gdx.graphics.getWidth();
+            if (paddle.getX() + nuevaAnchura > pantallaAncho) {
+                // Ajustar el incremento para no salir del límite derecho
+                incremento = pantallaAncho - paddle.getX() - paddle.getWidth();
+            }
+
+            paddle.setWidth((int) (paddle.getWidth() + incremento));  // Aumenta el tamaño ajustado
             activo = true;
         }
     }
